@@ -3,11 +3,19 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.verifyToken = (req, res, next) => {
     const header = req.headers.authorization;
-    if(!header) return res.status(401).json({error: 'There is no token provided!'});
+    if(!header){
+        const error = new Error('Access denied. No Token provided.');
+        error.statusCode = 401;
+        return next(error);
+    };
 
     const token = header.split(' ')[1];
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({error: 'Invalid token!'});
+        if (err){
+            const error = new Error('Invalid token.');
+            error.statusCode = 403;
+            return next(error);
+        };
 
         req.user = user;
         next();
