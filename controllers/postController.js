@@ -17,10 +17,26 @@ exports.createpost = async (req, res, next) => {
 //get all post
 exports.getposts = async (req, res, next) => {
     const selectQuery = 'SELECT id, title, content, author, created_at FROM posts WHERE flag = 1';
+    const page = parseInt(req.query.page) || 1;        // default page 1
+    const limit = parseInt(req.query.limit) || 10;     // default limit 10
+    const offset = (page - 1) * limit;
+
+    const totalPost = 'SELECT COUNT(*) AS total FROM posts WHERE flag = 1';
+    const dataQuery = 'SELECT id, title, content, author, created_at FROM posts WHERE flag = 1 LIMIT ? OFFSET ?';
 
     try{
-        const [results] = await db.query(selectQuery);
-        res.json(results);
+        // const [results] = await db.query(selectQuery);
+        // res.json(results);
+        const [[{total}]] = await db.query(totalPost);
+        const [posts] = await db.query(dataQuery, [limit, offset]);
+        const totalPages = Math.ceil(total/limit);
+
+        res.json({
+            posts,
+            total,
+            page,
+            totalPages
+        });
     } catch (err){
         next(err);
     }
